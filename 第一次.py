@@ -3,14 +3,14 @@ import pandas as pd
 from streamlit_echarts import st_echarts
 import datetime
 
-# 1. 網頁基礎設定
+# 1. 網頁基礎設定 (隱藏官方選單)
 st.set_page_config(
     page_title="智慧跨航空機票比價系統", 
     layout="wide",
     menu_items={}
 )
 
-# 2. 🎯 【圖層強制著色指令】直接針對指標元件與容器元件塗上與 Esme 面板一模一樣的深灰色！
+# 2. 🎯 【視覺終極完全體】注入 100% 雲端相容 CSS：三大指標、航班選項全部完美換裝深灰色卡片！
 st.markdown("""
     <style>
     /* 全網頁底色大背景 */
@@ -29,26 +29,26 @@ st.markdown("""
         color: #f8fafc !important;
     }
     
-    /* 🛠️ 修正 1：強迫「三大指標區塊」塗上深灰色底色，形成有感的卡片區隔 */
+    /* 三大指標區塊：強制改裝為深灰色卡片 */
     div[data-testid="metric-container"] {
-        background-color: #1e293b !important; /* 與 Esme 智慧分析面板完全同款的深灰色 */
+        background-color: #1e293b !important;
         padding: 20px !important;
         border-radius: 8px !important;
-        border: 1px solid #334155 !important; /* 實體框線 */
+        border: 1px solid #334155 !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     }
     
-    /* 🛠️ 修正 2：強迫分頁下「每一個航班選項的 container 外框」通通塗上深灰色底色 */
+    /* 第一分頁航班組合：強制改裝為與 Esme 面板一致的深灰色獨立卡片 */
     .stTabs [data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #1e293b !important; /* 強制轉為與 Esme 相同的深灰色區塊 */
+        background-color: #1e293b !important;
         padding: 25px !important;
         border-radius: 8px !important;
-        border: 1px solid #334155 !important; /* 實體框線 */
+        border: 1px solid #334155 !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
         margin-bottom: 20px !important;
     }
 
-    /* 下拉選單與按鈕微調 */
+    /* 下拉選單與搜尋按鈕美化 */
     div[data-baseweb="select"] > div {
         background-color: #1e293b !important;
         color: #ffffff !important;
@@ -65,6 +65,24 @@ st.markdown("""
         background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%) !important;
         color: #ffffff !important;
     }
+    
+    /* 🎯 找回來的購買連結按鈕：定製為極具儀式感的商務亮藍色大按鈕 */
+    div.stLinkButton > a {
+        color: #ffffff !important;
+        background-color: #2563eb !important;
+        border: 1px solid #3b82f6 !important;
+        font-weight: bold !important;
+        border-radius: 6px !important;
+        width: 100% !important;
+        text-align: center !important;
+        padding: 8px 16px !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+    }
+    div.stLinkButton > a:hover {
+        background-color: #1d4ed8 !important;
+        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.5) !important;
+    }
+
     .stTabs [data-baseweb="tab"] {
         color: #94a3b8 !important;
         font-weight: 600 !important;
@@ -83,10 +101,7 @@ def load_data_by_index():
             df = pd.read_csv("my_premium_stable_flight_data.csv", encoding="utf-8")
         except:
             df = pd.read_csv("my_premium_stable_flight_data.csv", encoding="cp950")
-        
-        # 自動清理未命名欄位
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-        
         cols = df.columns.tolist()
         rename_dict = {}
         if len(cols) >= 1: rename_dict[cols[0]] = 'Origin'
@@ -96,7 +111,6 @@ def load_data_by_index():
         if len(cols) >= 5: rename_dict[cols[4]] = 'DepTime'
         if len(cols) >= 6: rename_dict[cols[5]] = 'RetTime'
         if len(cols) >= 7: rename_dict[cols[6]] = 'Price'
-        
         df = df.rename(columns=rename_dict)
         return df
     except Exception as e:
@@ -111,19 +125,16 @@ def load_data_by_index():
         })
 
 df_raw = load_data_by_index()
-
 for col in ['Origin', 'Destination']:
     if col in df_raw.columns:
         df_raw[col] = df_raw[col].astype(str).str.strip()
 
 # --- 側邊欄控制中心 ---
 st.sidebar.header("Round-Trip Search Center")
-
 available_origins = sorted(df_raw['Origin'].unique().tolist()) if 'Origin' in df_raw.columns else ['TPE']
 available_dests = sorted(df_raw['Destination'].unique().tolist()) if 'Destination' in df_raw.columns else ['NRT']
 
 user_name = st.sidebar.text_input("使用者姓名 User Name", value="Esme")
-
 current_origin = st.sidebar.selectbox("出發地 Airport (Origin)", options=available_origins, index=0)
 current_destination = st.sidebar.selectbox("目的地 Airport (Destination)", options=available_dests, index=0)
 
@@ -139,8 +150,6 @@ if luggage_check:
     luggage_weight = st.sidebar.slider("加購重量 (KG)", 0, 40, 20)
 
 st.sidebar.write("") 
-
-# 🔍 開始進行智慧比價按鈕
 search_btn = st.sidebar.button("🔍 開始進行智慧比價", use_container_width=True)
 
 if "lock_origin" not in st.session_state: st.session_state.lock_origin = current_origin
@@ -163,14 +172,10 @@ if st.session_state.app_click_lock:
     df_filtered = df_raw[(df_raw['Origin'] == current_origin) & (df_raw['Destination'] == current_destination)].copy()
 
     def calculate_final_price(row):
-        try:
-            base = float(row['Price'])
-        except:
-            base = 15000
-        if tax_check:
-            base = base * 1.015
-        if luggage_check:
-            base += (luggage_weight * 150)
+        try: base = float(row['Price'])
+        except: base = 15000
+        if tax_check: base = base * 1.015
+        if luggage_check: base += (luggage_weight * 150)
         return int(base * passengers)
 
     if not df_filtered.empty:
@@ -188,14 +193,11 @@ if st.session_state.app_click_lock:
     avg_expense = int(df_filtered['計算總價'].mean()) if total_combos > 0 else 0
     max_expense = int(df_filtered['計算總價'].max()) if total_combos > 0 else 0
 
-    # 🎯 上方三大指標：這次使用了最直覺的 metric-container 標籤，保證塗上灰色背景
+    # 三大指標框框
     col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric(label="總機票組合數", value=f"{total_combos} 組")
-    with col2:
-        st.metric(label="全網平均總票價", value=f"${avg_expense:,} TWD")
-    with col3:
-        st.metric(label="全網最高總票價", value=f"${max_expense:,} TWD")
+    with col1: st.metric(label="總機票組合數", value=f"{total_combos} 組")
+    with col2: st.metric(label="全網平均總票價", value=f"${avg_expense:,} TWD")
+    with col3: st.metric(label="全網最高總票價", value=f"${max_expense:,} TWD")
 
     st.write("")
 
@@ -205,13 +207,12 @@ if st.session_state.app_click_lock:
             <div style="background-color: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 25px;">
                 <h4 style="margin: 0 0 15px 0; color: #ffffff; font-family: sans-serif;">💡 {user_name} 智慧大數據走勢分析：</h4>
                 <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 15px; line-height: 1.8;">
-                    <li>當前航線 <span style="color: #3b82f6; font-weight: bold;">{current_origin}</span> to <span style="color: #3b82f6; font-weight: bold;">{current_destination}</span> 的歷史來回機票區間：最高 <span style="color: #f43f5e; font-weight: bold;">${max_expense:,} TWD</span>，最低 <span style="color: #10b981; font-weight: bold;">${min_expense:,} TWD</span>。</li>
+                    <li>當前航線 <span style="color: #3b82f6; font-weight: bold;">{current_origin}</span> to <span style="color: #3b82f6; font-weight: bold;">{current_destination}</span> 的歷史來回機票區間：最高 <span style="color: #f43f5e; font-weight: bold;">${max_expense:,} TWD</span>，最低 <span style="color: #10b981; font-weight: bold;">${min_expense:,} TWD</span>.</li>
                     <li><strong>智慧旅遊建議：</strong> 目前的比價結果已根據您左側的行李和手續費勾選進行了『跨航司公平權重換算』，最新全網低價屬於健康推薦區間，可安心前往平台開票！</li>
                 </ul>
             </div>
         """, unsafe_allow_html=True)
 
-    # 三大分頁
     tab1, tab2, tab3 = st.tabs(["智慧跨航空低價推薦", "市場數據統計圖表", "原始航班矩陣總表"])
 
     with tab1:
@@ -219,7 +220,6 @@ if st.session_state.app_click_lock:
         if total_combos == 0:
             st.warning("當前航線無符合數據，請嘗試切換別的出發地 or 目的地。")
         else:
-            # 🎯 航班卡片：這次使用了更強大的樣式指定，強迫卡片圖層塗上灰色
             for idx, row in df_filtered.iterrows():
                 label_text = "自由行首選：全網最省跨航空組合" if idx == 0 else f"推薦方案 (選項 {idx+1})"
                 
@@ -241,9 +241,13 @@ if st.session_state.app_click_lock:
                         flt_back = flight_p[1] if len(flight_p) > 1 else flight_p[0]
                         st.write(f"{air_back} ({flt_back})")
                     with c_right:
+                        # 🎯 右側價格欄位：完美接回官網開票跳轉按鈕
                         st.write("來回總票價 (含稅)")
                         st.title(f"${row['計算總價']:,}")
                         st.caption(f"航線：{current_origin} to {current_destination}")
+                        
+                        # 🔗 購買按鈕核心代碼回歸！面試展示時點擊會直接跳轉航空公司（範例設為 Skyscanner 國際站）
+                        st.link_button("✈️ 前往官網開票", url="https://www.skyscanner.com.tw", use_container_width=True)
 
     with tab2:
         st.subheader("各航司組合含稅總票價對比 (智慧聚焦領先方案)")
@@ -260,38 +264,12 @@ if st.session_state.app_click_lock:
                     formatted_data.append({"value": val, "itemStyle": {"color": "#475569"}})
             
             y_min = int(min(raw_values) * 0.95)
-            
             options = {
-                "tooltip": {
-                    "trigger": "axis",
-                    "axisPointer": {"type": "shadow"},
-                    "formatter": "{b}<br/>來回總票價: <b>${c}</b> TWD"
-                },
+                "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}, "formatter": "{b}<br/>來回總票價: <b>${c}</b> TWD"},
                 "grid": {"top": "12%", "left": "8%", "right": "5%", "bottom": "18%"},
-                "xAxis": {
-                    "type": "category", 
-                    "data": categories, 
-                    "axisLabel": {"rotate": 15, "color": "#94a3b8", "fontSize": 12, "interval": 0}
-                },
-                "yAxis": {
-                    "type": "value", 
-                    "name": "價格 (TWD)", 
-                    "min": y_min, 
-                    "axisLabel": {"color": "#94a3b8"},
-                    "splitLine": {"lineStyle": {"color": "#334155"}}
-                },
-                "series": [{
-                    "type": "bar", 
-                    "data": formatted_data,
-                    "barWidth": "40%",
-                    "label": {
-                        "show": True, 
-                        "position": "top", 
-                        "color": "#ffffff", 
-                        "fontWeight": "bold",
-                        "formatter": "${c}"
-                    }
-                }],
+                "xAxis": {"type": "category", "data": categories, "axisLabel": {"rotate": 15, "color": "#94a3b8", "fontSize": 12, "interval": 0}},
+                "yAxis": {"type": "value", "name": "價格 (TWD)", "min": y_min, "axisLabel": {"color": "#94a3b8"}, "splitLine": {"lineStyle": {"color": "#334155"}}},
+                "series": [{"type": "bar", "data": formatted_data, "barWidth": "40%", "label": {"show": True, "position": "top", "color": "#ffffff", "fontWeight": "bold", "formatter": "${c}"}}],
                 "backgroundColor": "#0f172a"
             }
             st_echarts(options=options, height="450px")
@@ -301,10 +279,7 @@ if st.session_state.app_click_lock:
     with tab3:
         st.subheader("ALL SCHEDULED FLIGHT DETAILS")
         st.data_editor(
-            df_filtered,
-            use_container_width=True,
-            disabled=True, 
-            hide_index=True, 
+            df_filtered, use_container_width=True, disabled=True, hide_index=True,
             column_config={
                 "Origin": st.column_config.TextColumn("Origin 🛫 出發機場"),
                 "Destination": st.column_config.TextColumn("Destination 🛬 目的機場"),
@@ -316,6 +291,5 @@ if st.session_state.app_click_lock:
                 "計算總價": st.column_config.NumberColumn("Total Price 💰 試算總價 (含稅與行李)", format="$%d")
             }
         )
-
 else:
     st.write("系統安全開機完成！請在左側輸入出發地、目的地並按下搜尋按鈕以解鎖全新的智慧卡片。")
